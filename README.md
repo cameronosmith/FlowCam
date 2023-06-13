@@ -5,6 +5,7 @@
 [Yilun DU](https://yilundu.github.io/),
 [Ayush Tewari](https://ayushtewari.com),
 [Vincent Sitzmann](https://vsitzmann.github.io/)
+
 MIT
 
 This is the official implementation of the paper "FlowCam: Training Generalizable 3D Radiance Fields without Camera Poses via Pixel-Aligned Scene Flow".
