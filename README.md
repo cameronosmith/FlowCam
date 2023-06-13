@@ -27,7 +27,7 @@ The code is organized as follows:
 ## Reproducing experiments
 
 See `python run.py --help` for a list of command line arguments. 
-An example training script on CO3D-Hydrants is `python train.py --dataset hydrant --vid_len 8 --batch_size 2 --online --name hydrants_flowcam.
+An example training script on CO3D-Hydrants is `python train.py --dataset hydrant --vid_len 8 --batch_size 2 --online --name hydrants_flowcam.`
 Similarly, replace `--dataset hydrants` with any of `[realestate,kitti,10cat]` for training on RealEstate10K, KITTI, or CO3D-10Category.
 
 Use the `--online` flag for summaries to be logged to your wandb account. 
