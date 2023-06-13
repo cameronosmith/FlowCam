@@ -39,7 +39,9 @@ We use environment variables to set the dataset and logging paths, though you ca
 ## Data
 
 The KITTI dataset we use can be downloaded here: https://www.cvlibs.net/datasets/kitti/raw_data.php
+
 Instructions for downloading the RealEstate10K dataset can be found here: https://github.com/yilundu/cross_attention_renderer/blob/master/data_download/README.md
+
 We use the V2 version of the CO3D dataset, which can be downloaded here: https://github.com/facebookresearch/co3d
 
 ### Coordinate and camera parameter conventions
