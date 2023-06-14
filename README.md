@@ -2,7 +2,7 @@
 ### [Project Page](https://cameronosmith.github.io/flowcam) | [Paper](https://arxiv.org/abs/2306.00180)  | [Pretrained Models](https://drive.google.com/drive/folders/1t7vmvBg9OAo4S8I2zjwfqhL656H1r2JP?usp=sharing)
 
 [Cameron Smith](https://cameronosmith.github.io/),
-[Yilun DU](https://yilundu.github.io/),
+[Yilun Du](https://yilundu.github.io/),
 [Ayush Tewari](https://ayushtewari.com),
 [Vincent Sitzmann](https://vsitzmann.github.io/)
 
@@ -10,7 +10,7 @@ MIT
 
 This is the official implementation of the paper "FlowCam: Training Generalizable 3D Radiance Fields without Camera Poses via Pixel-Aligned Scene Flow".
 
-<img src="https://cameronosmith.github.io/flowcam/img/pipeline.png"  width="800" style="background-color: white;">
+<img src="https://raw.githubusercontent.com/cameronosmith/cameronosmith.github.io/main/flowcam/img/pipeline_white.png"  width="800" >
 
 ## High-Level structure
 The code is organized as follows:
