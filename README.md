@@ -10,7 +10,7 @@ MIT
 
 This is the official implementation of the paper "FlowCam: Training Generalizable 3D Radiance Fields without Camera Poses via Pixel-Aligned Scene Flow".
 
-<img src="https://cameronosmith.github.io/flowcam/img/pipeline.png"  width="800">
+<img src="https://cameronosmith.github.io/flowcam/img/pipeline.png"  width="800" style="background-color: white;">
 
 ## High-Level structure
 The code is organized as follows:
