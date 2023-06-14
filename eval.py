@@ -17,13 +17,7 @@ model.n_samples=128
 val_dataset = get_dataset(val=True,)
 
 for eval_idx,eval_dataset_idx in enumerate(tqdm(torch.linspace(0,len(val_dataset)-1,min(args.n_eval,len(val_dataset))).int())):
-    #if eval_idx!=62:continue
-    #if eval_idx not in [474]:continue
     model_input,ground_truth = val_dataset[eval_dataset_idx]
-##for eval_idx,eval_dataset_idx in enumerate(tqdm(range(len(val_dataset.seqs if args.dataset!="realestate" else val_dataset.all_scenes)))):
-    #if eval_idx not in [5]:continue
-    #model_input,ground_truth = val_dataset.__getitem__(0,eval_dataset_idx)
-    #print("NOTE iterating over sequences here for figure making, revert for quant eval")
 
     for x in (model_input,ground_truth): 
         for k,v in x.items(): x[k] = v[None].cuda() # collate
@@ -34,7 +28,6 @@ for eval_idx,eval_dataset_idx in enumerate(tqdm(torch.linspace(0,len(val_dataset
     rgb_est,rgb_gt = [rearrange(img[:,:-1].clip(0,1),"b trgt (x y) c -> (b trgt) c x y",x=model_input["trgt_rgb"].size(-2)) 
                                             for img in (model_out["fine_rgb" if "fine_rgb" in model_out else "rgb"],ground_truth["trgt_rgb"])]
     depth_est = rearrange(model_out["depth"][:,:-1],"b trgt (x y) c -> (b trgt) c x y",x=model_input["trgt_rgb"].size(-2))
-    #ctxt_depth_est = rearrange(model_out["ctxt_depth"][:,:-1],"b trgt (x y) c -> (b trgt) c x y",x=model_input["trgt_rgb"].size(-2))
 
     psnr += piqa.PSNR()(rgb_est.clip(0,1).contiguous(),rgb_gt.clip(0,1).contiguous())
     lpips += loss_fn_vgg(rgb_est*2-1,rgb_gt*2-1).mean()
@@ -56,7 +49,6 @@ for eval_idx,eval_dataset_idx in enumerate(tqdm(torch.linspace(0,len(val_dataset
         fp = os.path.join(eval_idx_dir,f"ctxt0.png");plt.imsave(fp,ctxt_rgbs[0].clip(0,1).permute(1,2,0).cpu().numpy())
         fp = os.path.join(eval_idx_dir,f"ctxt1.png");plt.imsave(fp,ctxt_rgbs[1].clip(0,1).permute(1,2,0).cpu().numpy())
         fp = os.path.join(eval_idx_dir,f"ctxt2.png");plt.imsave(fp,ctxt_rgbs[2].clip(0,1).permute(1,2,0).cpu().numpy())
-        #fp = os.path.join(eval_idx_dir,f"ctxt0_depth.png");plt.imsave(fp,ctxt_depth_est[1].clip(0,1).permute(1,2,0).cpu().numpy())
         for i,(rgb_est,rgb_gt,depth) in enumerate(zip(rgb_est,rgb_gt,depth_est)):
             fp = os.path.join(eval_idx_dir,f"{i}_est.png");plt.imsave(fp,rgb_est.clip(0,1).permute(1,2,0).cpu().numpy())
             print(fp)

@@ -64,7 +64,6 @@ class FlowCam(nn.Module):
         # Resnet rgb+flow feats
         rgb_flow = torch.cat((all_rgb,all_flow*4),2)
         rgb_flow_feats = self.nerf_enc_flow(rgb_flow,imsize)
-        #rgb_flow_feats = self.nerf_enc_flow(all_rgb,imsize)
 
         # Add rays to features for some amount of focal length information
         rds = self.pos_encoder(geometry.get_world_rays(model_input["x_pix"], model_input["intrinsics"], None)[1])
@@ -112,7 +111,7 @@ class FlowCam(nn.Module):
         # Render out trgt frames from [ctxt=0, ctxt=-1, ctxt=middle][: num context frames ] 
         render = self.render(model_input,poses,trgt_rays)
 
-        # Pose induced flow using ctxt depth and then multiview rendered depth
+        # Pose induced flow using ctxt depth and then multiview rendered depth (latter not used in paper experiments)
         corresp_surf_from_pose = (torch.einsum("bcij,bcdkj->bcdki",adj_transf,hom(eye_pts[:,1:]))[:,:,ctxt_rays,...,:3]*eye_weights[:,1:]).sum(-2)
         flow_from_pose = geometry.project(corresp_surf_from_pose.flatten(0,1), model_input["intrinsics"].flatten(0,1))[0].unflatten(0,(b,n_trgt))-model_input["x_pix"][:,:,ctxt_rays]
         corresp_surf_from_pose_render = (torch.einsum("bcij,bcdkj->bcdki",adj_transf,hom(eye_pts[:,1:]))[:,:,trgt_rays,...,:3]*render["weights"]).sum(-2)

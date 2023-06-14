@@ -17,7 +17,6 @@ def loss_fn(model_out, gt, model_input):
     losses["metrics/flow_from_pose"] = ((model_out["flow_from_pose"].clip(-.2,.2) - gt_bwd_flow.clip(-.2,.2)).square().mean() * 6e3).clip(0,10)
 
     gt_bwd_flow_trgt = rays(gt["bwd_flow"] if "bwd_flow" in gt else ch_sec(model_out["flow_inp"]),model_out["trgt_rays"])
-    #losses["metrics/flow_from_pose_render"] = ((model_out["flow_from_pose_render"].clip(-.2,.2) - gt_bwd_flow_trgt.clip(-.2,.2)).square().mean() * 6e3)#.clip(0,10)
 
     # monodepth loss (not used in paper but may be useful later)
     if args.midas_sup:

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import flow_vis
 import flow_vis_torch
-import matplotlib.pyplot as plt; imsave = lambda x,y=0: plt.imsave("/nobackup/users/camsmith/img/tmp%s.png"%y,x.cpu().numpy()); 
+import matplotlib.pyplot as plt; 
 from einops import rearrange, repeat
 import piqa
 import imageio
@@ -162,13 +162,6 @@ def render_cam_traj_wobble(model_input,model,resolution,n):
         b = model_out["rgb"].size(0)
         rgb_pred = model_out["rgb"][:,0].view(resolution).permute(1,0,2,3).flatten(1,2).cpu().numpy()
         magma_depth = model_out["depth"][:,0].view(resolution).permute(1,0,2,3).flatten(1,2).cpu()
-        #depth_pred = model_out["depth"][:,0].clone()
-        #mind,maxd=sample_out["depth"].cpu().min(),sample_out["depth"].cpu().max()
-        #depth_pred[0,0]=mind #normalize
-        #depth_pred[0,1]=maxd #normalize
-        #depth_pred = (mind/(1e-3+depth_pred).view(resolution[:-1]).permute(1,0,2).flatten(1,2).cpu().numpy())
-        #magma = cm.get_cmap('magma')
-        #magma_depth = torch.from_numpy(magma(depth_pred))[...,:3]
         rgbd_im=torch.cat((torch.from_numpy(rgb_pred),magma_depth),0).numpy()
         frames.append(rgbd_im)
     return frames
@@ -287,13 +280,6 @@ def render_view_interp(model_input,model,resolution,n):
         b = model_out["rgb"].size(0)
         rgb_pred = model_out["rgb"][:,0].view(resolution).permute(1,0,2,3).flatten(1,2).cpu().numpy()
         magma_depth = model_out["depth"][:,0].view(resolution).permute(1,0,2,3).flatten(1,2).cpu()
-        #depth_pred = model_out["depth"][:,0].clone()
-        #mind,maxd=sample_out["depth"].cpu().min(),sample_out["depth"].cpu().max()
-        #depth_pred[0,0]=mind #normalize
-        #depth_pred[0,1]=maxd #normalize
-        #depth_pred = (mind/(1e-3+depth_pred).view(resolution[:-1]).permute(1,0,2).flatten(1,2).cpu().numpy())
-        #magma = cm.get_cmap('magma')
-        #magma_depth = torch.from_numpy(magma(depth_pred))[...,:3]
         rgbd_im=torch.cat((torch.from_numpy(rgb_pred),magma_depth),0).numpy()
         frames.append(rgbd_im)
     return frames
@@ -319,9 +305,6 @@ def wandb_summary(loss, model_output, model_input, ground_truth, resolution,pref
 
     depthgt = (ground_truth["trgt_depth"] if "trgt_depth" in ground_truth else model_output["trgt_depth_inp"] if "trgt_depth_inp" in model_output 
                     else model_input["trgt_depth"] if "trgt_depth" in model_input else None)
-    #if depthgt is not None:
-    #    depthgt = make_grid(inv(depthgt).cpu().view(*resolution).detach(),normalize=True,nrow=nrow)
-    #    wandb_out["ref/depthgt"]= depthgt
 
     if "ctxt_rgb" in model_output:
         wandb_out["est/ctxt_depth"] =make_grid(model_output["ctxt_depth"].cpu().flatten(0,1).permute(0,2,1).unflatten(-1,imsl).detach(),nrow=nrow)
@@ -344,13 +327,7 @@ def wandb_summary(loss, model_output, model_input, ground_truth, resolution,pref
             wandb_out["est/flow_est_pose_render"] = flow_vis_torch.flow_to_color(make_grid(model_output["flow_from_pose_render"].flatten(0,1).permute(0,2,1).unflatten(-1,imsl),nrow=nrow))/255
     else:
         print("skipping flow plotting")
-    #for k,v in wandb_out.items(): print(k,v.max(),v.min())
-    #for k,v in wandb_out.items():plt.imsave("img/%s.png"%k,v.permute(1,2,0).detach().cpu().numpy().clip(0,1));
-    #print("saving locally")
-    #zz
-    #wandb.log({"sanity/"+k+"_min":v.min() for k,v in wandb_out.items()})
-    #wandb.log({"sanity/"+k+"_max":v.max() for k,v in wandb_out.items()})
-    #for k,v in wandb_out.items(): print(v.shape)
+
     wandb_out = {prefix+k:wandb.Image(v.permute(1, 2, 0).float().detach().clip(0,1).cpu().numpy()) for k,v in wandb_out.items()}
 
     wandb.log(wandb_out)
