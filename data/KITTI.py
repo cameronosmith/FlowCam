@@ -142,8 +142,6 @@ class SceneInstanceDataset(torch.utils.data.Dataset):
             )
         )
 
-        self.disps = sorted(glob(os.path.join(self.instance_dir, "disps", "*.npy")))
-
         self.color_paths = sorted(glob_imgs(color_dir))
         self.pose_paths = sorted(glob(os.path.join(pose_dir, "*.txt")))
         self.instance_name = os.path.basename(os.path.dirname(self.instance_dir))
@@ -170,16 +168,6 @@ class SceneInstanceDataset(torch.utils.data.Dataset):
 
         rgb = transforms.ToTensor()(self.kitti_raw.get_cam2(idx)) * 2 - 1
 
-        disp = torch.from_numpy(
-            np.load(os.path.join(self.instance_dir, "disps", self.disps[idx]))
-        )
-        zval = (
-            self.kitti_raw.calib.K_cam2[0, 0] * self.kitti_raw.calib.b_rgb / disp.abs()
-        )
-        ydiff = (rgb.size(-2) - zval.size(-2)) // 2
-        xdiff = (rgb.size(-1) - zval.size(-1)) // 2
-        zval = zval[-ydiff:ydiff, -xdiff:xdiff]
-
         K = torch.from_numpy(self.kitti_raw.calib.K_cam2.copy())
         cam2imu = torch.from_numpy(self.kitti_raw.calib.T_cam2_imu).inverse()
         imu2world = torch.from_numpy(self.kitti_raw.oxts[idx].T_w_imu)
@@ -187,7 +175,6 @@ class SceneInstanceDataset(torch.utils.data.Dataset):
 
         uv = np.mgrid[0 : rgb.size(1), 0 : rgb.size(2)].astype(float).transpose(1, 2, 0)
         uv = torch.from_numpy(np.flip(uv, axis=-1).copy()).long()
-
 
         # Downsample
         h, w = rgb.shape[-2:]
@@ -203,24 +190,15 @@ class SceneInstanceDataset(torch.utils.data.Dataset):
         uv_large = np.mgrid[0:lowh, 0:loww].astype(float).transpose(1, 2, 0)
         uv_large = torch.from_numpy(np.flip(uv_large, axis=-1).copy()).long()
         uv_large = uv_large / torch.tensor([loww, lowh])  # uv in [0,1]
-        zval_large = F.interpolate( zval[None, None], (lowh, loww), mode="bilinear", align_corners=True)[0, 0]
-        camcrd = lift( *uv_large.flatten(0, 1)[None].unbind(-1), zval_large.flatten(0, 1)[None], K[None], homogeneous=True,)
-        wc = (cam2world[None].float() @ camcrd.permute(0, 2, 1).float())[:, :3].permute( 0, 2, 1)
-        depth_large = ( (cam2world[None][:, :3, -1][:, None] - wc) .norm(dim=-1, keepdim=True) .squeeze() .unflatten(0, (lowh, loww)))
 
         #scale = 1; 
         lowh, loww = self.low_res#int(64 * scale), int(208 * scale)
         rgb = F.interpolate(
             rgb[None], (lowh, loww), mode="bilinear", align_corners=True
         )[0]
-        zval = F.interpolate( zval[None, None], (lowh, loww), mode="bilinear", align_corners=True)[0, 0]
         uv = np.mgrid[0:lowh, 0:loww].astype(float).transpose(1, 2, 0)
         uv = torch.from_numpy(np.flip(uv, axis=-1).copy()).long()
         uv = uv / torch.tensor([loww, lowh])  # uv in [0,1]
-
-        camcrd = lift( *uv.flatten(0, 1)[None].unbind(-1), zval.flatten(0, 1)[None], K[None], homogeneous=True,)
-        wc = (cam2world[None].float() @ camcrd.permute(0, 2, 1).float())[:, :3].permute( 0, 2, 1)
-        depth = ( (cam2world[None][:, :3, -1][:, None] - wc) .norm(dim=-1, keepdim=True) .squeeze() .unflatten(0, (lowh, loww)))
 
         tmp = torch.eye(4)
         tmp[:3, :3] = K
@@ -235,11 +213,9 @@ class SceneInstanceDataset(torch.utils.data.Dataset):
             "rgb": rgb,
             "large_rgb": large_rgb,
             "med_rgb": med_rgb,
-            "depth": depth,
             "intrinsics": K.float(),
             "uv": uv,
             "uv_large": uv_large,
-            "depth_large": depth_large,
         }
 
         return sample
@@ -472,7 +448,6 @@ class KittiDataset(torch.utils.data.Dataset):
         out_dict = {"query": trgt, "post_input": post_input, "context": None}, trgt
 
         imgs = trgt["rgb"]
-        depths = trgt["depth"]
         imgs_large = (trgt["large_rgb"]*.5+.5)*255
         imgs_med = (trgt["large_rgb"]*.5+.5)*255
         Ks = trgt["intrinsics"][:,:3,:3]
@@ -488,9 +463,6 @@ class KittiDataset(torch.utils.data.Dataset):
                 "ctxt_rgb_large": imgs_large[:-1],
                 "trgt_rgb_med": imgs_med[1:],
                 "ctxt_rgb_med": imgs_med[:-1],
-                #"ctxt_depth": depths.squeeze(1)[:-1],
-                #"ctxt_depth": depths.squeeze(1)[:-1],
-                #"trgt_depth": depths.squeeze(1)[1:],
                 "intrinsics": Ks[1:],
                 "x_pix": uv[1:],
                 "trgt_c2w": trgt["cam2world"][1:],
@@ -499,8 +471,6 @@ class KittiDataset(torch.utils.data.Dataset):
         gt = {
                 "trgt_rgb": ch_sec(imgs[1:])*.5+.5,
                 "ctxt_rgb": ch_sec(imgs[:-1])*.5+.5,
-                #"ctxt_depth": depths.squeeze(1)[:-1].flatten(1,2).unsqueeze(-1),
-                #"trgt_depth": depths.squeeze(1)[1:].flatten(1,2).unsqueeze(-1),
                 "intrinsics": Ks[1:],
                 "x_pix": uv[1:],
                 }
